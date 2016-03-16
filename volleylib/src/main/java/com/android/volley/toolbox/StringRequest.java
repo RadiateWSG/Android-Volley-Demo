@@ -60,6 +60,13 @@ public class StringRequest extends Request<String> {
         mListener.onResponse(response);
     }
 
+    /**
+     * 把NetworkResponse转换为Response并返回：
+     * 1、NetworkResponse中的data，转换为Response中的result
+     * 2、result的类型即为StringRequest类具体定义的String类型
+     * @param response Response from the network
+     * @return
+     */
     @Override
     protected Response<String> parseNetworkResponse(NetworkResponse response) {
         String parsed;
