@@ -30,6 +30,9 @@ import android.graphics.BitmapFactory;
 /**
  * A canned request for getting an image at a given URL and calling
  * back with a decoded Bitmap.
+ *
+ * 对ImageRequest请求的使用，可以参考NetWorkImageView中的封装，具体请求在ImageLoader中。
+ *
  */
 public class ImageRequest extends Request<Bitmap> {
     /** Socket timeout in milliseconds for image requests */
@@ -138,10 +141,12 @@ public class ImageRequest extends Request<Bitmap> {
         byte[] data = response.data;
         BitmapFactory.Options decodeOptions = new BitmapFactory.Options();
         Bitmap bitmap = null;
+        //mMaxWidth和mMaxHeight参数都为0，即直接加载并显示原图；
         if (mMaxWidth == 0 && mMaxHeight == 0) {
             decodeOptions.inPreferredConfig = mDecodeConfig;
             bitmap = BitmapFactory.decodeByteArray(data, 0, data.length, decodeOptions);
         } else {
+            //否则，对图片进行等比缩放。
             // If we have to resize this image, first get the natural bounds.
             decodeOptions.inJustDecodeBounds = true;
             BitmapFactory.decodeByteArray(data, 0, data.length, decodeOptions);
@@ -163,6 +168,7 @@ public class ImageRequest extends Request<Bitmap> {
             Bitmap tempBitmap =
                 BitmapFactory.decodeByteArray(data, 0, data.length, decodeOptions);
 
+            //再次判断，对生成的tempBitmap缩放为上面等比计算后的宽、高
             // If necessary, scale down to the maximal acceptable size.
             if (tempBitmap != null && (tempBitmap.getWidth() > desiredWidth ||
                     tempBitmap.getHeight() > desiredHeight)) {
