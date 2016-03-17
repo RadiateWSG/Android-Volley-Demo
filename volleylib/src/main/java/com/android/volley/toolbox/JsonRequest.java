@@ -29,6 +29,10 @@ import java.io.UnsupportedEncodingException;
  * A request for retrieving a T type response body at a given URL that also
  * optionally sends along a JSON body in the request specified.
  *
+ * 1、重写getBodyContentType()方法，覆盖默认的Content-Type
+ * 2、parseNetworkResponse()方法交给子类JsonObjectRequest和JsonArrayRequest来实现，
+ * 分别返回对应泛型的Response。
+ *
  * @param <T> JSON type of response expected
  */
 public abstract class JsonRequest<T> extends Request<T> {
