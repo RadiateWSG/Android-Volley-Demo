@@ -1,6 +1,3 @@
-/*
- * Created by Storm Zhang, Feb 11, 2014.
- */
 
 package com.spirit.talk.androidvolleydemo.ui;
 
