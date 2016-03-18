@@ -19,11 +19,6 @@ package com.android.volley;
 /**
  * Encapsulates a parsed response for delivery.
  *
- * 网络请求的基类，其子类有；StringRequest、JsonRequest、ImageRequest
- * 其中子类必须要实现两个abstract方法：
- * 1、deliverResponse()：子类只需调用Response中Listener的onResponse()方法，通过回掉调用者就可以处理服务器响应后的数据。
- * 2、parseNetworkResponse()：对服务器响应的数据进行解析，并调用Response.success()最终转换为Response。
- *
  * @param <T> Parsed type of this response
  */
 public class Response<T> {
