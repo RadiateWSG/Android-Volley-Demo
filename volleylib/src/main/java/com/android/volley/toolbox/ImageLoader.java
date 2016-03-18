@@ -26,7 +26,6 @@ import com.android.volley.RequestQueue;
 import com.android.volley.Response.ErrorListener;
 import com.android.volley.Response.Listener;
 import com.android.volley.VolleyError;
-import com.android.volley.toolbox.ImageRequest;
 
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -91,7 +90,7 @@ public class ImageLoader {
      * The default implementation of ImageListener which handles basic functionality
      * of showing a default image until the network response is received, at which point
      * it will switch to either the actual image or the error image.
-     * @param imageView The imageView that the listener is associated with.
+     * @param view The imageView that the listener is associated with.
      * @param defaultImageResId Default image resource ID to use, or 0 if it doesn't exist.
      * @param errorImageResId Error image resource ID to use, or 0 if it doesn't exist.
      */
@@ -165,7 +164,6 @@ public class ImageLoader {
      * request is fulfilled.
      *
      * @param requestUrl The URL of the image to be loaded.
-     * @param defaultImage Optional default image to return until the actual image is loaded.
      */
     public ImageContainer get(String requestUrl, final ImageListener listener) {
         return get(requestUrl, listener, 0, 0);
@@ -190,6 +188,7 @@ public class ImageLoader {
 
         final String cacheKey = getCacheKey(requestUrl, maxWidth, maxHeight);
 
+        //@mark 如果内存中存在，则直接回调imageListener的onResponse()
         // Try to look up the request in the cache of remote images.
         Bitmap cachedBitmap = mCache.getBitmap(cacheKey);
         if (cachedBitmap != null) {
@@ -199,15 +198,23 @@ public class ImageLoader {
             return container;
         }
 
+        //@mark 此处创建ImageContainer对象（即包装后的ImageListener）
         // The bitmap did not exist in the cache, fetch it!
         ImageContainer imageContainer =
                 new ImageContainer(null, requestUrl, cacheKey, imageListener);
 
+        //@mark 此时bitmap为空，回掉onResponse()方法去显示NetworkImageView设置的mDefaultImageId。
         // Update the caller to let them know that they should use the default bitmap.
         imageListener.onResponse(imageContainer, true);
 
         // Check to see if a request is already in-flight.
         BatchedImageRequest request = mInFlightRequests.get(cacheKey);
+        /**
+         * @mark_key
+         * 如果该cacheKey的请求存在，则把此次请求的回掉listener添加进来，
+         * 等到服务端响应后，遍历所有的请求listener进行回掉：
+         * @see ImageLoader#batchResponse(String, BatchedImageRequest)
+         */
         if (request != null) {
             // If it is, add this request to the list of listeners.
             request.addContainer(imageContainer);
@@ -231,6 +238,12 @@ public class ImageLoader {
             });
 
         mRequestQueue.add(newRequest);
+        /**
+         * @mark_key
+         * 以cacheKey为主键，缓存BatchedImageRequest对象。
+         * BatchedImageRequest的主要作用是通过mContainers缓存相同request的多个回掉接口。
+         * 比如A页面请求了url，此时打开B页面同样请求该url，那么此时服务器响应后，就遍历mContainers中接口回掉通知A页面和B页面。
+         */
         mInFlightRequests.put(cacheKey,
                 new BatchedImageRequest(newRequest, imageContainer));
         return imageContainer;
@@ -323,7 +336,7 @@ public class ImageLoader {
             if (mListener == null) {
                 return;
             }
-
+            //@mark 分别在mInFlightRequests(请求HashMap)和mBatchedResponses(批量回调HashMap)中查找并remove。
             BatchedImageRequest request = mInFlightRequests.get(mCacheKey);
             if (request != null) {
                 boolean canceled = request.removeContainerAndCancelIfNecessary(this);
@@ -426,8 +439,8 @@ public class ImageLoader {
      * Starts the runnable for batched delivery of responses if it is not already started.
      * @param cacheKey The cacheKey of the response being delivered.
      * @param request The BatchedImageRequest to be delivered.
-     * @param error The volley error associated with the request (if applicable).
      */
+    //@mark_key 从第一次调用batchResponse()开始，会批量处理mBatchResponseDelayMs时间内的回掉。
     private void batchResponse(String cacheKey, BatchedImageRequest request) {
         mBatchedResponses.put(cacheKey, request);
         // If we don't already have a batch delivery runnable in flight, make a new one.
@@ -455,7 +468,6 @@ public class ImageLoader {
                     mBatchedResponses.clear();
                     mRunnable = null;
                 }
-
             };
             // Post the runnable.
             mHandler.postDelayed(mRunnable, mBatchResponseDelayMs);
