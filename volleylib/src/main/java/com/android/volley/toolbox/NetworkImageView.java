@@ -113,6 +113,12 @@ public class NetworkImageView extends ImageView {
         // if the view's bounds aren't known yet, and this is not a wrap-content/wrap-content
         // view, hold off on loading the image.
         boolean isFullyWrapContent = wrapWidth && wrapHeight;
+
+        /**
+         * @mark
+         * 如果width=height=0，且属性不为Wrap_Content，即需要等在onLayout()方法中被调用
+         * @see NetworkImageView#onLayout(boolean, int, int, int, int)
+         */
         if (width == 0 && height == 0 && !isFullyWrapContent) {
             return;
         }
@@ -128,18 +134,23 @@ public class NetworkImageView extends ImageView {
             return;
         }
 
+        //@mark 假设Listview中每个item中都有NetworkImageView，那么ListView在滑动时会重用NetworkImageView，
+        //@mark 但是NetworkImageView的url会变，所以判断请求的url是否相同。
         // if there was an old request in this view, check if it needs to be canceled.
         if (mImageContainer != null && mImageContainer.getRequestUrl() != null) {
             if (mImageContainer.getRequestUrl().equals(mUrl)) {
                 // if the request is from the same URL, return.
+                //如果请求url相同，则不去添加新的请求。
                 return;
             } else {
+                //@mark 如果请求url不同，证明NetworkImageView被重用了，取消之前的请求，并在下面逻辑中创建新的请求。
                 // if there is a pre-existing request, cancel it if it's fetching a different URL.
                 mImageContainer.cancelRequest();
                 setDefaultImageOrNull();
             }
         }
 
+        //@mark Width和Height都是Wrap_Content属性时，maxWidth = maxHeight = 0，即原图显示，这个在ImageRequest中是否要缩放时会进行判断
         // Calculate the max image width / height to use while ignoring WRAP_CONTENT dimens.
         int maxWidth = wrapWidth ? 0 : width;
         int maxHeight = wrapHeight ? 0 : height;
@@ -155,6 +166,13 @@ public class NetworkImageView extends ImageView {
                         }
                     }
 
+                    /**
+                     * @mark_key
+                     * @param isImmediate true：在两个地方调用：1、内存缓存直接命中cacheKey，回掉改方法显示bitmap;
+                     * 2、内存缓存没有命中，回调改方法去显示默认的mDefaultImageId。
+                     *                    false：经过网络请求后回掉来刷新ImageView。
+                     * isImmediate为true，且isInLayoutPass为true（正在进行布局），则延迟到主线程消息队列最后进行设置bitmap。
+                     */
                     @Override
                     public void onResponse(final ImageContainer response, boolean isImmediate) {
                         // If this was an immediate response that was delivered inside of a layout
@@ -198,6 +216,7 @@ public class NetworkImageView extends ImageView {
         loadImageIfNecessary(true);
     }
 
+    //@mark 在onDetachedFromWindow()中做一些清理工作：取消请求；置为null释放引用。
     @Override
     protected void onDetachedFromWindow() {
         if (mImageContainer != null) {
