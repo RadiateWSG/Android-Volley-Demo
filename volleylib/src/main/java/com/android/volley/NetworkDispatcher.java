@@ -52,6 +52,15 @@ public class NetworkDispatcher extends Thread {
      * @param cache Cache interface to use for writing responses to cache
      * @param delivery Delivery interface to use for posting responses
      */
+    /**
+     * @mark
+     * @see RequestQueue#start() 在RequestQueue中的start()方法中被调用，
+     * 持有以下引用：
+     * @param queue 网络请求队列
+     * @param network 网络类，代表了一个可以执行请求的网络
+     * @param cache 缓存类，代表了一个可以获取请求结果，存储请求结果的缓存
+     * @param delivery 请求结果传递类，可以传递请求的结果或者错误到调用者
+     */
     public NetworkDispatcher(BlockingQueue<Request<?>> queue,
             Network network, Cache cache,
             ResponseDelivery delivery) {
@@ -88,6 +97,7 @@ public class NetworkDispatcher extends Thread {
                 request = mQueue.take();
             } catch (InterruptedException e) {
                 // We may have been interrupted because it was time to quit.
+                //@mark 此处提供了退出循环的方法。
                 if (mQuit) {
                     return;
                 }
@@ -107,6 +117,7 @@ public class NetworkDispatcher extends Thread {
                 addTrafficStatsTag(request);
 
                 // Perform the network request.
+                //@mark 处理网络请求，获得NetworkResponse。
                 NetworkResponse networkResponse = mNetwork.performRequest(request);
                 request.addMarker("network-http-complete");
 
@@ -118,10 +129,12 @@ public class NetworkDispatcher extends Thread {
                 }
 
                 // Parse the response here on the worker thread.
+                //@mark 解析为我们需要的Response
                 Response<?> response = request.parseNetworkResponse(networkResponse);
                 request.addMarker("network-parse-complete");
 
                 // Write to cache if applicable.
+                //@mark 缓存response结果
                 // TODO: Only update cache metadata instead of entire record for 304s.
                 if (request.shouldCache() && response.cacheEntry != null) {
                     mCache.put(request.getCacheKey(), response.cacheEntry);
