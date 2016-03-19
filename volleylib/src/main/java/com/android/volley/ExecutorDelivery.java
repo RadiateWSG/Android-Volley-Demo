@@ -22,6 +22,10 @@ import java.util.concurrent.Executor;
 
 /**
  * Delivers responses and errors.
+ * 请求结果传输接口具体实现类。
+ * 在Handler对应线程中（RequestQueue中默认实现是主线程）传输缓存调度线程或者网络调度线程中产生的请求结果或请求错误，
+ * 会在请求成功的情况下调用 Request.deliverResponse(…) 函数，
+ * 失败时调用 Request.deliverError(…) 函数。
  */
 public class ExecutorDelivery implements ResponseDelivery {
     /** Used for posting responses, typically to the main thread. */
@@ -30,6 +34,11 @@ public class ExecutorDelivery implements ResponseDelivery {
     /**
      * Creates a new response delivery interface.
      * @param handler {@link Handler} to post responses on
+     */
+    /**@mark_key
+     * 该方法在RequestQueue类中被调用：new ExecutorDelivery(new Handler(Looper.getMainLooper()))
+     * @see RequestQueue#RequestQueue(Cache, Network, int)
+     * 可以看出mResponsePoster被初始化为向主线程发送消息的Executor。
      */
     public ExecutorDelivery(final Handler handler) {
         // Make an Executor that just wraps the handler.
