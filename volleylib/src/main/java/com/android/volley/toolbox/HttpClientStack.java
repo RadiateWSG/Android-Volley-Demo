@@ -46,6 +46,9 @@ import java.util.Map;
 
 /**
  * An HttpStack that performs request over an {@link HttpClient}.
+ * @mark
+ * 使用HttpClient类来处理Request，并实现
+ * @see HttpStack#performRequest(Request, Map) 方法返回HttpResponse。
  */
 public class HttpClientStack implements HttpStack {
     protected final HttpClient mClient;
@@ -89,6 +92,7 @@ public class HttpClientStack implements HttpStack {
 
     /**
      * Creates the appropriate subclass of HttpUriRequest for passed in request.
+     * @mark 根据不同的请求方式，创建相应的HttpUriRequest的子类。
      */
     @SuppressWarnings("deprecation")
     /* protected */ static HttpUriRequest createHttpRequest(Request<?> request,
