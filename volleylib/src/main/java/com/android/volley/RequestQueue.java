@@ -16,8 +16,11 @@
 
 package com.android.volley;
 
+import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
+
+import com.android.volley.toolbox.HttpStack;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -50,6 +53,8 @@ public class RequestQueue {
      *          is <em>not</em> contained in that list. Is null if no requests are staged.</li>
      * </ul>
      */
+    //@mark 维护了一个等待请求的集合，
+    //如果一个请求正在被处理并且可以被缓存，后续的相同 url 的请求，将进入此等待队列。
     private final Map<String, Queue<Request<?>>> mWaitingRequests =
             new HashMap<String, Queue<Request<?>>>();
 
@@ -58,8 +63,14 @@ public class RequestQueue {
      * will be in this set if it is waiting in any queue or currently being processed by
      * any dispatcher.
      */
+    //@mark 维护了一个正在进行中，尚未完成的请求集合。
     private final Set<Request<?>> mCurrentRequests = new HashSet<Request<?>>();
 
+    /**
+     * @mark
+     * 维护了两个基于优先级的 Request 队列（mCacheQueue、mNetworkQueue），缓存请求队列和网络请求队列。
+     * 放在缓存请求队列中的 Request，将通过缓存获取数据；放在网络请求队列中的 Request，将通过网络获取数据。
+     */
     /** The cache triage queue. */
     private final PriorityBlockingQueue<Request<?>> mCacheQueue =
         new PriorityBlockingQueue<Request<?>>();
@@ -90,7 +101,9 @@ public class RequestQueue {
      * Creates the worker pool. Processing will not begin until {@link #start()} is called.
      *
      * @param cache A Cache to use for persisting responses to disk
+     *              @see com.android.volley.toolbox.Volley#newRequestQueue(Context, HttpStack)
      * @param network A Network interface for performing HTTP requests
+     *                @see com.android.volley.toolbox.Volley#newRequestQueue(Context, HttpStack)
      * @param threadPoolSize Number of network dispatcher threads to create
      * @param delivery A ResponseDelivery interface for posting responses and errors
      */
@@ -126,6 +139,7 @@ public class RequestQueue {
 
     /**
      * Starts the dispatchers in this queue.
+     * @mark 开启缓存线程调度（mCacheDispatcher）和网络线程调度（mDispatchers）
      */
     public void start() {
         stop();  // Make sure any currently running dispatchers are stopped.
@@ -144,6 +158,7 @@ public class RequestQueue {
 
     /**
      * Stops the cache and network dispatchers.
+     * @mark 停止请求缓存线程调度器和网络请求线程调度器
      */
     public void stop() {
         if (mCacheDispatcher != null) {
@@ -214,6 +229,10 @@ public class RequestQueue {
      * @return The passed-in request
      */
     public <T> Request<T> add(Request<T> request) {
+        /**
+         * @mark request中保持RequestQueue的引用，该引用在
+         * @see Request#finish(String)中使用，会在mCurrentRequests中remove该request。
+         */
         // Tag the request as belonging to this queue and add it to the set of current requests.
         request.setRequestQueue(this);
         synchronized (mCurrentRequests) {
@@ -225,6 +244,7 @@ public class RequestQueue {
         request.addMarker("add-to-queue");
 
         // If the request is uncacheable, skip the cache queue and go straight to the network.
+        //@mark 如果request不需要缓存，则直接添加到网络请求队列中。
         if (!request.shouldCache()) {
             mNetworkQueue.add(request);
             return request;
@@ -235,6 +255,7 @@ public class RequestQueue {
             String cacheKey = request.getCacheKey();
             if (mWaitingRequests.containsKey(cacheKey)) {
                 // There is already a request in flight. Queue up.
+                //@mark 如果等待队列中包含该url,则放到缓存map集合的列表中。
                 Queue<Request<?>> stagedRequests = mWaitingRequests.get(cacheKey);
                 if (stagedRequests == null) {
                     stagedRequests = new LinkedList<Request<?>>();
@@ -247,6 +268,7 @@ public class RequestQueue {
             } else {
                 // Insert 'null' queue for this cacheKey, indicating there is now a request in
                 // flight.
+                //@mark 如果该url是第一次被请求，则插入一个空的queue；并加入缓存请求队列中。
                 mWaitingRequests.put(cacheKey, null);
                 mCacheQueue.add(request);
             }
