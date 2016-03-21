@@ -49,6 +49,10 @@ import java.util.Map;
 
 /**
  * A network performing Volley requests over an {@link HttpStack}.
+ * @mark
+ * 接口Network的实现类，在performRequest()方法中实现解析Request转换为NetworkResponse。
+ * 具体是保持了HttpStack对象，通过HttpStack来解析Request为HttpResponse，
+ * 然后通过statusCode, responseContents, responseHeaders来创建NetworkResponse并返回。
  */
 public class BasicNetwork implements Network {
     protected static final boolean DEBUG = VolleyLog.DEBUG;
@@ -146,7 +150,7 @@ public class BasicNetwork implements Network {
                         throw new ServerError(networkResponse);
                     }
                 } else {
-                    throw new NetworkError(networkResponse);
+                    throw new NetworkError(e);
                 }
             }
         }
