@@ -47,6 +47,11 @@ public class ImageLoader {
     private int mBatchResponseDelayMs = 100;
 
     /** The cache implementation to be used as an L1 cache before calling into volley. */
+    /**
+     * @mark
+     * 通过构造方法，保持了一个ImageCache引用，即内存图片的内存缓存。
+     * demo中在RequestManager类里初始化了ImageLoader，ImageCache参数是实现了一个自己的BitmapLruCache。
+     */
     private final ImageCache mCache;
 
     /**
@@ -188,7 +193,7 @@ public class ImageLoader {
 
         final String cacheKey = getCacheKey(requestUrl, maxWidth, maxHeight);
 
-        //@mark 如果内存中存在，则直接回调imageListener的onResponse()
+        //@mark 如果内存缓存中存在，则直接回调imageListener的onResponse()
         // Try to look up the request in the cache of remote images.
         Bitmap cachedBitmap = mCache.getBitmap(cacheKey);
         if (cachedBitmap != null) {
