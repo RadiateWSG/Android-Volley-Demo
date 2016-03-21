@@ -564,6 +564,12 @@ public abstract class Request<T> implements Comparable<Request<T>> {
 
         // High-priority requests are "lesser" so they are sorted to the front.
         // Equal priorities are sorted by sequence number to provide FIFO ordering.
+        /**
+         * @mark
+         * 1、首先如果两者优先级相同（即left == right）：RequestQueue类中定义了一个AtomicInteger成员变量，在add()方法中执行request.setSequence(getSequenceNumber())来设置该Request的order，
+         *    从而保证了先进先出的顺序；
+         * 2、如果两者优先级不同，则根据优先级的顺序。
+         */
         return left == right ?
                 this.mSequence - other.mSequence :
                 right.ordinal() - left.ordinal();
