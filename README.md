@@ -2,6 +2,14 @@
 基于android volley库的demo，并附上volley源码和注释理解。
 
 # 概要分析
+
+- 总体设计：
+<br/>
+<img src="volleylib/art/design.png" width="80%" />
+
+
+
+
 - Response的解析流程：
 <br/>
 <img src="volleylib/art/response-process-flow-chart.png" width="80%" />
