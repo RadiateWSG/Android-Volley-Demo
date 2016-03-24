@@ -5,14 +5,14 @@
 
 - 总体设计：
 <br/>
-<img src="volleylib/art/design.png" width="80%" />
+<img src="volleylib/art/design.png" width="66%" />
 
 
 
 
 - Response的解析流程：
 <br/>
-<img src="volleylib/art/response-process-flow-chart.png" width="80%" />
+<img src="volleylib/art/response-process-flow-chart.png" width="66%" />
 
   1、DiskBasedCache中缓存有该request，则用Cache.Entity在构造NetworkResponse对象。
   <br/>
