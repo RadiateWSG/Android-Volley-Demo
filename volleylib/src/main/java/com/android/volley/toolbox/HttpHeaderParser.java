@@ -79,10 +79,22 @@ public class HttpHeaderParser {
             serverExpires = parseDateAsEpoch(headerValue);
         }
 
+        //@mark_key 考虑使用"Last-Modified"来解析serverDate。
+        headerValue = headers.get("Last-Modified");
+        if (headerValue != null) {
+            serverDate = parseDateAsEpoch(headerValue);
+        }
+
         serverEtag = headers.get("ETag");
 
         // Cache-Control takes precedence over an Expires header, even if both exist and Expires
         // is more restrictive.
+        /**
+         * @mark
+         * 根据 Cache－Control 和 Expires 首部，计算出缓存的过期时间(ttl)，和缓存的新鲜度时间(softTtl),
+         * 默认softTtl和ttl相同，这里我们设置过期时间（比如24小时）大于新鲜度时间（比如5分钟）
+         * 如果有Cache-Control标签以它为准，没有就以Expires标签里的内容为准。
+         */
         if (hasCacheControl) {
             softExpire = now + maxAge * 1000;
         } else if (serverDate > 0 && serverExpires >= serverDate) {
