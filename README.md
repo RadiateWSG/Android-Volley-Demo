@@ -23,3 +23,8 @@
   4、得到Response<T>后，再由ResponseDelivery（具体实现类是ExecutorDelivery）.postResponse(request, response)来发送reponse。
   <br/>
   5、最后具体的Request会在deliverResponse()方法中收到消息，并在该方法中回掉Listener给具体调用者。
+
+- 关于Volley源码的解析，有很多写的不错，可以拿来参考：
+<br/>
+[源码分析]:http://www.codekk.com/open-source-project-analysis/detail/Android/grumoon/Volley%20%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90
+[磁盘缓存DiskBasedCache]:http://blog.csdn.net/asdzheng/article/details/45955653
