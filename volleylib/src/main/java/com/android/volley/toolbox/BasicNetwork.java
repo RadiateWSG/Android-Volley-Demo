@@ -100,6 +100,7 @@ public class BasicNetwork implements Network {
 
                 responseHeaders = convertHeaders(httpResponse.getAllHeaders());
                 // Handle cache validation.
+                //@mark 如果304就直接返回缓存数据
                 if (statusCode == HttpStatus.SC_NOT_MODIFIED) {
                     return new NetworkResponse(HttpStatus.SC_NOT_MODIFIED,
                             request.getCacheEntry() == null ? null : request.getCacheEntry().data,
@@ -195,6 +196,11 @@ public class BasicNetwork implements Network {
             return;
         }
 
+        /**
+         * @mark
+         * 向请求header添加“If-None-Match”和“If-Modified-Since”，让服务器对比是否返回304，从而重用缓存，达到了优化请求的目的。
+         *“If-None-Match”和“If-Modified-Since”，详见：http://www.cnblogs.com/rainwang/p/4270196.html
+         */
         if (entry.etag != null) {
             headers.put("If-None-Match", entry.etag);
         }
