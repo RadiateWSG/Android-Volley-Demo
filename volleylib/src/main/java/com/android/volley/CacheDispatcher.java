@@ -134,6 +134,7 @@ public class CacheDispatcher extends Thread {
                         new NetworkResponse(entry.data, entry.responseHeaders));
                 request.addMarker("cache-hit-parsed");
 
+                //@mark 验证缓存的新鲜度
                 if (!entry.refreshNeeded()) {
                     //@mark 缓存命中，且不需要刷新，则直接传递响应的结果。
                     // Completely unexpired cache hit. Just deliver the response.
